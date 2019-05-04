@@ -1,4 +1,4 @@
-#include<iostream>
+/*#include<iostream>
 #include<ctime>
 #include<cstdio>
 #include<Windows.h>
@@ -67,9 +67,10 @@ int main() {
 		DWORD end = GetTickCount();
 		avg += ((int)end - (int)start);
 		bignum_avg += acc;
-		printf("%d%% ¿Ï·á\n",(i+1)*10);
+		printf("%d%% ï¿½Ï·ï¿½\n",(i+1)*10);
 	}
 	avg /= AVGITER;
 	bignum_avg /= AVGITER;
-	printf("Æò±ÕBignum : %lld, Æò±Õ½Ã°£ : %dms\n",bignum_avg,avg);
+	printf("ï¿½ï¿½ï¿½Bignum : %lld, ï¿½ï¿½Õ½Ã°ï¿½ : %dms\n",bignum_avg,avg);
 }
+*/

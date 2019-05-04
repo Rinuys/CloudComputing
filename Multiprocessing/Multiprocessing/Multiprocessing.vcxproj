@@ -22,7 +22,7 @@
     <VCProjectVersion>15.0</VCProjectVersion>
     <ProjectGuid>{6EC23AE6-804D-4955-B7BE-8D1D44BCC6F4}</ProjectGuid>
     <RootNamespace>Multiprocessing</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -125,6 +125,10 @@
   <ItemGroup>
     <ClCompile Include="Lab0.cpp" />
     <ClCompile Include="Lab1.cpp" />
+    <ClCompile Include="Lab2.cpp" />
+    <ClCompile Include="Lab3.cpp" />
+    <ClCompile Include="Lab4.cpp" />
+    <ClCompile Include="TestPeterson.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
