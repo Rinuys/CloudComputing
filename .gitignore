@@ -1,0 +1,12 @@
+*.suo
+*.db
+*.ipch
+*.bin
+*.obj
+*.tlog
+*.vcxproj
+*.log
+*.lastbuildstate
+*.pdb
+*.iobj
+*.ipdb
