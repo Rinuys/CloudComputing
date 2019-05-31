@@ -10,3 +10,6 @@
 *.pdb
 *.iobj
 *.ipdb
+.vscode
+.vs
+.DS_Store
