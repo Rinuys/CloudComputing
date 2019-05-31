@@ -20,9 +20,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="cc_data.txt">
-      <Filter>리소스 파일</Filter>
-    </Text>
     <Text Include="input.txt">
       <Filter>리소스 파일</Filter>
     </Text>
