@@ -3,6 +3,7 @@
 #include<ctime>
 #include<cstdlib>
 #include<thread>
+#include<Windows.h>
 
 #define THREAD_SIZE 4							// 쓰레드의 개수
 #define NUMBEROFDATA 100000000					// 문자열의 개수
@@ -23,7 +24,7 @@ typedef struct stack {
 	int top=0;
 };
 
-char inputfile[20] = "input.txt";
+char inputfile[20] = "input_.txt";
 char outputfile[20] = "output.txt";
 char *st;
 
@@ -36,8 +37,7 @@ int merge_pool_cnt;
 
 void saveData() {
 	FILE *fp = fopen(outputfile, "w+");
-	fwrite(st, sizeof(char), NUMBEROFDATA*WORDSIZE, fp);
-	fprintf(fp, "\n");
+	fwrite(st, sizeof(char), NUMBEROFDATA*WORDSIZE - 1, fp);
 	fclose(fp);
 }
 
@@ -188,7 +188,7 @@ void merge(int s1, int e1, int s2, int e2) {
 			buff_cnt += WORDSIZE;
 		}
 	}
-	for (int i = 0; i < buff_cnt - WORDSIZE; i+=WORDSIZE) 
+	for (int i = 0; i < buff_cnt; i+=WORDSIZE) 
 		memcpy(st + start1 + i, buff + i, NUMBEROFCHARS);
 	free(buff);
 }
@@ -198,7 +198,7 @@ int main() {
 	
 	int diff = NUMBEROFDATA / THREAD_SIZE;
 
-	time_t start = clock();
+	time_t begin = clock();
 	// Load
 	printf("Loading Data...\n");
 	loadData();
@@ -249,7 +249,7 @@ int main() {
 	printf("Saving Data...\n");
 	saveData();
 	time_t end = clock();
-	printf("time : %dms\n", (int)(end - start));
+	cout << "Computing time : " << ((double)(end - begin) / CLOCKS_PER_SEC) << "s" << endl;
 	
 	return 0;
 }
