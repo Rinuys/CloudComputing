@@ -14,17 +14,12 @@
 
 using namespace std;
 
-typedef struct word {
-	char ch[NUMBEROFCHARS];
-	char temp;
-};
-
 typedef struct stack {
 	int arr[MAXSTACKSIZE];
 	int top=0;
 };
 
-char inputfile[20] = "input_.txt";
+char inputfile[20] = "input.txt";
 char outputfile[20] = "output.txt";
 char *st;
 
@@ -34,16 +29,17 @@ int end_value[THREAD_SIZE];
 thread sort_pool[THREAD_SIZE];
 thread merge_pool[THREAD_SIZE];
 int merge_pool_cnt;
+thread temp_pool[THREAD_SIZE];
 
 void saveData() {
-	FILE *fp = fopen(outputfile, "w+");
-	fwrite(st, sizeof(char), NUMBEROFDATA*WORDSIZE - 1, fp);
+	FILE *fp = fopen(outputfile, "w");
+	_fwrite_nolock(st, sizeof(char), NUMBEROFDATA * WORDSIZE - 1, fp);
 	fclose(fp);
 }
 
 void loadData() {
 	FILE *fp = fopen(inputfile, "r");
-	fread(st, sizeof(char), NUMBEROFDATA * WORDSIZE + 1, fp);
+	_fread_nolock(st, sizeof(char), NUMBEROFDATA * WORDSIZE - 1, fp);
 	fclose(fp);
 }
 
@@ -99,7 +95,6 @@ void _swap(int index1, int index2) {
 void small_sort(int start, int end) {
 	int i, j;
 	char t[WORDSIZE];
-	t[NUMBEROFCHARS] = '\0';
 	for (i = start + WORDSIZE; i <= end; i+=WORDSIZE) {
 		memcpy(t,st+i,NUMBEROFCHARS);
 		for (j = i - WORDSIZE; j >= start && !cmp(j,t) ; j-=WORDSIZE) 
@@ -154,6 +149,48 @@ void quick_sort(int start, int end) {
 		push(end_stack, j - WORDSIZE);
 	}
 }
+//
+//void mini_quick_sort(int id, int start, int end) {
+//	int pivot = start;
+//	int i = pivot + WORDSIZE;		// 왼쪽 출발 지점 
+//	int j = end;					// 오른쪽 출발 지점
+//	int temp;
+//
+//	while (i <= j) {				// 포인터가 엇갈릴때까지 반복
+//		while (i <= end && cmp(i, pivot)) i += WORDSIZE;
+//		while (j > start && cmp(pivot, j)) j -= WORDSIZE;
+//		if (i > j) _swap(j, pivot); // 엇갈림
+//		else _swap(i, j);			// i번째와 j번째를 스왑
+//	}
+//
+//	sort_pool[id] = thread(quick_sort, j + WORDSIZE, end);
+//	sort_pool[id+1] = thread(quick_sort, start, j - WORDSIZE);
+//	sort_pool[id].join();
+//	sort_pool[id+1].join();
+//}
+//
+//void divide_quick_sort(int start, int end) {
+//	int pivot = start;
+//	int i = pivot + WORDSIZE;		// 왼쪽 출발 지점 
+//	int j = end;					// 오른쪽 출발 지점
+//	int temp;
+//
+//	while (i <= j) {				// 포인터가 엇갈릴때까지 반복
+//		while (i <= end && cmp(i, pivot)) i += WORDSIZE;
+//		while (j > start && cmp(pivot, j)) j -= WORDSIZE;
+//		if (i > j) _swap(j, pivot); // 엇갈림
+//		else _swap(i, j);			// i번째와 j번째를 스왑
+//	}
+//
+//	// 분할
+//	temp_pool[0] = thread(mini_quick_sort,0 , j + WORDSIZE, end);
+//	temp_pool[1] = thread(mini_quick_sort,2 , start, j - WORDSIZE);
+//	for (int i = 0; i < 2; i++) temp_pool[i].join();
+//	/*push(start_stack, j + WORDSIZE);
+//	push(end_stack, end);
+//	push(start_stack, start);
+//	push(end_stack, j - WORDSIZE);*/
+//}
 
 void merge(int s1, int e1, int s2, int e2) {
 	int start1 = start_value[s1], end1 = end_value[e1]
@@ -162,7 +199,8 @@ void merge(int s1, int e1, int s2, int e2) {
 	int buff_cnt = 0;
 	int left = start1;
 	int right = start2;
-	while (left != start2 && right != end2 + WORDSIZE) {
+	int real_end = end2 + WORDSIZE;
+	while (left != start2 && right != real_end) {
 		if (cmp(left, right)) {
 			memcpy(buff + buff_cnt, st + left, NUMBEROFCHARS);
 			left += WORDSIZE;
@@ -175,49 +213,31 @@ void merge(int s1, int e1, int s2, int e2) {
 		}
 	}
 	if (left == start2) {
-		while (right != end2 + WORDSIZE) {
+		while (right != real_end) {
 			memcpy(buff + buff_cnt, st + right, NUMBEROFCHARS);
 			right += WORDSIZE;
 			buff_cnt += WORDSIZE;
 		}
 	}
-	else if (right == end2 + WORDSIZE) {
+	else if (right == real_end) {
 		while (left != start2) {
 			memcpy(buff + buff_cnt, st + left, NUMBEROFCHARS);
 			left += WORDSIZE;
 			buff_cnt += WORDSIZE;
 		}
 	}
-	for (int i = 0; i < buff_cnt; i+=WORDSIZE) 
-		memcpy(st + start1 + i, buff + i, NUMBEROFCHARS);
+	
+	memcpy(st + start1, buff, real_end - start1);
 	free(buff);
 }
 
-int main() {
-	st = (char*)malloc(sizeof(char) * ((NUMBEROFDATA * 11) + 1));
-	
-	int diff = NUMBEROFDATA / THREAD_SIZE;
+void prepareSave() {
+	int temp = NUMBEROFDATA * WORDSIZE - 1;
+	for (int i = WORDSIZE - 1; i < temp; i += WORDSIZE) st[i] = ' ';
+	for (int i = WORDSIZE * 10 - 1; i < temp; i += WORDSIZE * 10) st[i] = '\n';
+}
 
-	time_t begin = clock();
-	// Load
-	printf("Loading Data...\n");
-	loadData();
-	printData(5);
-
-	// QuickSort
-	printf("Sorting Data...\n");
-	int s, e;
-	for (int i = 0; i < THREAD_SIZE; i++) {
-		s = i * diff * WORDSIZE;
-		e = (i + 1) * diff * WORDSIZE - WORDSIZE;
-		start_value[i] = s;
-		end_value[i] = e;
-		sort_pool[i] = thread(quick_sort, s, e);
-	}
-	for (int i = 0; i < THREAD_SIZE; i++) sort_pool[i].join();
-
-	// Merge(홀수개일때 안 잡음)
-	printf("Merging Data...\n");
+void divide_merge(){
 	int mul = 2;
 	int mul1 = 1;
 	while (THREAD_SIZE / mul1 != 1) {
@@ -243,13 +263,56 @@ int main() {
 		mul1 *= 2;
 		mul *= 2;
 	}
+}
+int main() {
+	st = (char*)malloc(sizeof(char) * (NUMBEROFDATA * WORDSIZE - 1));
+	int diff = NUMBEROFDATA / THREAD_SIZE;
+
+	time_t begin = clock();
+	time_t _load, _sort, _merge, _prep, _save;
+
+	// Load
+	printf("Loading Data...\n");
+	loadData();
 	printData(5);
+	_load = clock() - begin;
+	cout << "Loading time : " << ((double)_load / CLOCKS_PER_SEC) << "s" << endl;
+
+	// QuickSort
+	printf("Sorting Data...\n");
+	//divide_quick_sort(0, (NUMBEROFDATA - 1) * WORDSIZE);
+	int s, e;
+	for (int i = 0; i < THREAD_SIZE; i++) {
+		s = i * diff * WORDSIZE;
+		e = (i + 1) * diff * WORDSIZE - WORDSIZE;
+		start_value[i] = s;
+		end_value[i] = e;
+		sort_pool[i] = thread(quick_sort, s, e);
+	}
+	for (int i = 0; i < THREAD_SIZE; i++) sort_pool[i].join();
+	_sort = clock() - begin - _load;
+	cout << "Sorting time : " << ((double)_sort / CLOCKS_PER_SEC) << "s" << endl;
+
+	// Merge(홀수개일때 안 잡음)
+	printf("Merging Data...\n");
+	divide_merge();
+	printData(5);
+	_merge = clock() - begin - _load - _sort;
+	cout << "Merging time : " << ((double)_merge / CLOCKS_PER_SEC) << "s" << endl;
+
+	// Prepare
+	printf("Preparing to Save Data...\n");
+	prepareSave();
+	_prep = clock() - begin - _load - _sort - _merge;
+	cout << "Preparing time : " << ((double)_prep / CLOCKS_PER_SEC) << "s" << endl;
 
 	// save
 	printf("Saving Data...\n");
 	saveData();
-	time_t end = clock();
-	cout << "Computing time : " << ((double)(end - begin) / CLOCKS_PER_SEC) << "s" << endl;
+	_save = clock() - begin - _load - _sort - _merge - _prep;
+	cout << "Saving time : " << ((double)_save / CLOCKS_PER_SEC) << "s" << endl;
+
+	cout << "Total time : " << ((double)(clock() - begin) / CLOCKS_PER_SEC) << "s" << endl;
 	
 	return 0;
 }
